@@ -4,16 +4,14 @@ import { setupApp } from "./setup-app";
 const app = express();
 setupApp(app);
 
-const PORT = process.env.PORT || 3000;
-
 if (process.env.NODE_ENV !== "production") {
+    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
         console.log(`Example app listening on port ${PORT}`);
     });
 }
 
-export default app;
-module.exports = app; 
+module.exports = app;
 // запуск приложения
 // app.listen(PORT, () => {
 //     console.log(`Example app listening on port ${PORT}`);
