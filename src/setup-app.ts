@@ -1,65 +1,72 @@
-import express, { Express } from "express";
+import express, { Express, Request, Response } from "express";
 import { db } from "./db";
 
 export const setupApp = (app: Express) => {
-    app.use(express.json()); // middleware для парсинга JSON в теле запроса
+    app.use(express.json());
 
-    // основной роут
-    app.get("/", (req, res) => {
+    app.get("/", (req: Request, res: Response) => {
         res.status(200).send("Hello world!");
     });
-    app.get("/videos", (req, res) => {
-        // возвращаем все видео
+
+    app.get("/videos", (req: Request, res: Response) => {
         res.status(200).send(db.videos);
     });
-    app.get("/videos/:id", (req, res) => {
 
-        const video = db.videos.find(f_video => f_video.id === +req.params.id)
+    app.get("/videos/:id", (req: Request, res: Response) => {
+        const video = db.videos.find(f_video => f_video.id === +req.params.id);
 
         if (!video) {
-            return res.sendStatus(404).send({ message: "Video Not Found" });    
+            res.status(404).send({ message: "Video Not Found" });
+            return;
         }
 
-        res.sendStatus(200).send(video);
-    })
-    app.post("/videos", (req, res) => {
+        res.status(200).send(video);
+    });
+
+    app.post("/videos", (req: Request, res: Response) => {
         const { title, author, availableResolutions } = req.body;
-        const errors = [];
+        const errors: { field: string, message: string }[] = [];
 
         if (!title || title.trim() === "" || title.length > 40) {
             errors.push({ field: "title", message: "Invalid title" });
         }
 
-        if (!author || author.trim === "" || author.length > 20) {
+        if (!author || author.trim() === "" || author.length > 20) {
             errors.push({ field: "author", message: "Invalid author" });
         }
-        if (!availableResolutions || !Array.isArray(availableResolutions) ||
-            availableResolutions.length === 0) {
-            errors.push({ field: "availableResolutions", message: "Invalid resolutions" });
 
-            if (errors.length > 0) {
-                return res.status(400).send({ errorsMessages: errors });
-            };
-            const newVideo = {
-                id: db.videos.length ? db.videos[db.videos.length - 1].id + 1 : 1,
-                title,
-                author,
-                canBeDownloaded: true,        // дефолтное значение
-                minAgeRestriction: null,      // дефолтное значение
-                createdAt: new Date().toISOString(),
-                publicationDate: new Date().toISOString(),
-                availableResolutions
-            };
-            db.videos.push(newVideo)
-            res.status(201).send(newVideo)
+        if (!availableResolutions || !Array.isArray(availableResolutions) || availableResolutions.length === 0) {
+            errors.push({ field: "availableResolutions", message: "Invalid resolutions" });
         }
+
+        if (errors.length > 0) {
+            res.status(400).send({ errorsMessages: errors });
+            return;
+        }
+
+        const newVideo = {
+            id: db.videos.length ? db.videos[db.videos.length - 1].id + 1 : 1,
+            title,
+            author,
+            canBeDownloaded: true,
+            minAgeRestriction: null,
+            createdAt: new Date().toISOString(),
+            publicationDate: new Date().toISOString(),
+            availableResolutions
+        };
+
+        db.videos.push(newVideo);
+        res.status(201).send(newVideo);
     });
-    app.put("/videos/:id", (req, res) => {
-        const video = db.videos.find(del => del.id === +req.params.id)
+
+    app.put("/videos/:id", (req: Request, res: Response) => {
+        const video = db.videos.find(v => v.id === +req.params.id);
         const { title, author, availableResolutions, canBeDownloaded, minAgeRestriction } = req.body;
-        const errors = [];
+        const errors: { field: string, message: string }[] = [];
+
         if (!video) {
-            return res.sendStatus(404)
+            res.sendStatus(404);
+            return;
         }
 
         if (!title || title.trim() === "" || title.length > 40) {
@@ -68,55 +75,41 @@ export const setupApp = (app: Express) => {
         if (!author || author.trim() === "" || author.length > 20) {
             errors.push({ field: "author", message: "Invalid author" });
         }
-        if (!availableResolutions || !Array.isArray(availableResolutions) ||
-            availableResolutions.length === 0) {
-            errors.push({ field: "availableResolutions", message: "Invalid resolutions" })
+        if (!availableResolutions || !Array.isArray(availableResolutions) || availableResolutions.length === 0) {
+            errors.push({ field: "availableResolutions", message: "Invalid resolutions" });
         }
 
         if (errors.length > 0) {
-            return res.status(400).send({ errorsMessages: errors })
+            res.status(400).send({ errorsMessages: errors });
+            return;
         }
+
         video.title = title ?? video.title;
         video.author = author ?? video.author;
         video.availableResolutions = availableResolutions ?? video.availableResolutions;
-        video.canBeDownloaded = canBeDownloaded ?? video.canBeDownloaded;        // дефолтное значение
+        video.canBeDownloaded = canBeDownloaded ?? video.canBeDownloaded;
         video.minAgeRestriction = minAgeRestriction ?? video.minAgeRestriction;
 
-        return res.sendStatus(204)
+        res.sendStatus(204);
+    });
 
-    })
+    // ИСПРАВЛЕНО: "vedios" -> "videos"
+    app.delete("/videos/:id", (req: Request, res: Response) => {
+        const check = db.videos.find(v => v.id === +req.params.id);
 
-    // app.post("/drivers", (req, res) => {
-    //     //1) проверяем приходящие данные на валидность
-    //     //2) создаем newDriver
-    //     const newDriver: Driver = {
-    //         id: db.drivers.length ? db.drivers[db.drivers.length - 1].id + 1 : 1,
-    //         status: DriverStatus.Online,
-    //         createdAt: new Date(),
-    //         ...req.body
-    //     };
-    //     //3) добавляем newDriver в БД
-    //     db.drivers.push(newDriver);
-    //     //4) возвращаем ответ
-    //     res.status(201).send(newDriver);
-    // });
-    app.delete("/vedios/:id", (req, res) => {
-        const Check = db.videos.find(del => del.id === +req.params.id)
-
-        if (!Check) {
-            return res.sendStatus(404)
+        if (!check) {
+            res.sendStatus(404);
+            return;
         }
-        db.videos = db.videos.filter(del => del.id !== +req.params.id)
-        res.sendStatus(204)
-        return;
+
+        db.videos = db.videos.filter(v => v.id !== +req.params.id);
+        res.sendStatus(204);
     });
-    app.delete("/testing/all-data", (req, res) => {
+
+    app.delete("/testing/all-data", (req: Request, res: Response) => {
         db.videos = [];
-        res.send(204).send({ message: "No content" })
-        return;
+        res.sendStatus(204);
     });
+
     return app;
 };
-
-
-
