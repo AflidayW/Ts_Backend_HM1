@@ -1,0 +1,98 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.setupApp = void 0;
+const express_1 = __importDefault(require("express"));
+const db_1 = require("./db");
+const setupApp = (app) => {
+    app.use(express_1.default.json());
+    app.get("/", (req, res) => {
+        res.status(200).send("Hello world!");
+    });
+    app.get("/videos", (req, res) => {
+        res.status(200).send(db_1.db.videos);
+    });
+    app.get("/videos/:id", (req, res) => {
+        const video = db_1.db.videos.find(f_video => f_video.id === +req.params.id);
+        if (!video) {
+            res.status(404).send({ message: "Video Not Found" });
+            return;
+        }
+        res.status(200).send(video);
+    });
+    app.post("/videos", (req, res) => {
+        const { title, author, availableResolutions } = req.body;
+        const errors = [];
+        if (!title || title.trim() === "" || title.length > 40) {
+            errors.push({ field: "title", message: "Invalid title" });
+        }
+        if (!author || author.trim() === "" || author.length > 20) {
+            errors.push({ field: "author", message: "Invalid author" });
+        }
+        if (!availableResolutions || !Array.isArray(availableResolutions) || availableResolutions.length === 0) {
+            errors.push({ field: "availableResolutions", message: "Invalid resolutions" });
+        }
+        if (errors.length > 0) {
+            res.status(400).send({ errorsMessages: errors });
+            return;
+        }
+        const newVideo = {
+            id: db_1.db.videos.length ? db_1.db.videos[db_1.db.videos.length - 1].id + 1 : 1,
+            title,
+            author,
+            canBeDownloaded: true,
+            minAgeRestriction: null,
+            createdAt: new Date().toISOString(),
+            publicationDate: new Date().toISOString(),
+            availableResolutions
+        };
+        db_1.db.videos.push(newVideo);
+        res.status(201).send(newVideo);
+    });
+    app.put("/videos/:id", (req, res) => {
+        const video = db_1.db.videos.find(v => v.id === +req.params.id);
+        const { title, author, availableResolutions, canBeDownloaded, minAgeRestriction } = req.body;
+        const errors = [];
+        if (!video) {
+            res.sendStatus(404);
+            return;
+        }
+        if (!title || title.trim() === "" || title.length > 40) {
+            errors.push({ field: "title", message: "Invalid title" });
+        }
+        if (!author || author.trim() === "" || author.length > 20) {
+            errors.push({ field: "author", message: "Invalid author" });
+        }
+        if (!availableResolutions || !Array.isArray(availableResolutions) || availableResolutions.length === 0) {
+            errors.push({ field: "availableResolutions", message: "Invalid resolutions" });
+        }
+        if (errors.length > 0) {
+            res.status(400).send({ errorsMessages: errors });
+            return;
+        }
+        video.title = title ?? video.title;
+        video.author = author ?? video.author;
+        video.availableResolutions = availableResolutions ?? video.availableResolutions;
+        video.canBeDownloaded = canBeDownloaded ?? video.canBeDownloaded;
+        video.minAgeRestriction = minAgeRestriction ?? video.minAgeRestriction;
+        res.sendStatus(204);
+    });
+    // ИСПРАВЛЕНО: "vedios" -> "videos"
+    app.delete("/videos/:id", (req, res) => {
+        const check = db_1.db.videos.find(v => v.id === +req.params.id);
+        if (!check) {
+            res.sendStatus(404);
+            return;
+        }
+        db_1.db.videos = db_1.db.videos.filter(v => v.id !== +req.params.id);
+        res.sendStatus(204);
+    });
+    app.delete("/testing/all-data", (req, res) => {
+        db_1.db.videos = [];
+        res.sendStatus(204);
+    });
+    return app;
+};
+exports.setupApp = setupApp;
