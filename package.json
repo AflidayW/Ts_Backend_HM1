@@ -9,7 +9,7 @@
     "jest": "jest -i",
     "lint": "eslint --fix .",
     "format": "prettier --write .",
-    "build": "tsc"
+    "vercel-build": "tsc"
   },
   "keywords": [],
   "author": "",
