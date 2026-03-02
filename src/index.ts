@@ -13,7 +13,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export default app;
-
+module.exports = app; 
 // запуск приложения
 // app.listen(PORT, () => {
 //     console.log(`Example app listening on port ${PORT}`);
