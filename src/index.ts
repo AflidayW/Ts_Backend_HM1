@@ -1,7 +1,7 @@
 import express from "express";
 import { setupApp } from "./setup-app";
 
-export const app = express();
+const app = express();
 setupApp(app);
 
 const PORT = process.env.PORT || 3000;
@@ -13,6 +13,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export default app;
+
 // запуск приложения
 // app.listen(PORT, () => {
 //     console.log(`Example app listening on port ${PORT}`);
